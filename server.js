@@ -9,27 +9,21 @@ app.use(cors());
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
 });
 
-const rooms = {};
+app.get("/", (req, res) => {
+  res.send("Private Chat Server Running");
+});
 
 io.on("connection", (socket) => {
+  console.log("User connected");
 
   socket.on("join_room", (room) => {
-
-    if (!rooms[room]) {
-      rooms[room] = [];
-    }
-
-    if (rooms[room].length >= 2) {
-      socket.emit("room_full");
-      return;
-    }
-
-    rooms[room].push(socket.id);
     socket.join(room);
-
   });
 
   socket.on("send_message", (data) => {
@@ -37,13 +31,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    for (let room in rooms) {
-      rooms[room] = rooms[room].filter(id => id !== socket.id);
-    }
+    console.log("User disconnected");
   });
-
 });
 
-server.listen(3000, () => {
-  console.log("Server running on port 3000");
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
